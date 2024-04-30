@@ -67,7 +67,7 @@ class Unit:
 
 
 class Swarm:
-    def __init__(self, sizeSwarm, dimension, currentVelocityRatio, localVelocityRatio, globalVelocityRatio, numbersOfLife, function, start, end):
+    def __init__(self, sizeSwarm, dimension, currentVelocityRatio, localVelocityRatio, globalVelocityRatio, numbersOfLife, function, start, end, accuracy):
         # размер популяции частиц
         self.sizeSwarm = sizeSwarm
         # размерность решаемой задачи
@@ -89,6 +89,9 @@ class Swarm:
         self.globalBestPos = []
         self.globalBestScore = float('inf')
         self.globalBestScoreList = []
+        #количество итераций
+        self.iteration_count = 0
+        self.accuracy = accuracy
         # создаем рой
         self.createSwarm()
 
@@ -105,44 +108,31 @@ class Swarm:
     def startSwarm(self):
         """ Метод для запуска алгоритма"""
         dataForGIF = []
+        check = False
         for _ in range(self.numbersOfLife):
             oneDataX = []
             oneDataY = []
+            if (check):
+                break
             for unit in self.swarm:
                 oneDataX.append(unit.currentPos[0])
                 oneDataY.append(unit.currentPos[1])
                 unit.globalBestPos = self.globalBestPos
                 score = unit.nextIteration()
-                if score < self.globalBestScore:
+                if (score < self.globalBestScore):
                     self.globalBestScore = score
                     self.globalBestPos = unit.localBestPos
                     self.globalBestScoreList.append(self.globalBestScore)
-                    #print("РЕЗУЛЬТАТ:", self.globalBestScore, "В ТОЧКЕ:",self.globalBestPos)
+                    print("Iteration:", self.iteration_count, "BestScore:", self.globalBestScore, "BestPosition:", self.globalBestPos)
+                    if (self.globalBestScore <= self.accuracy ):
+                        print("Required accuracy reached!", self.globalBestScore)
+                        print("Number of iterations:", self.iteration_count)
+                        check = True
+                        break
             dataForGIF.append([oneDataX, oneDataY])
-
-        # рисуем gif
-        # fnames = []
-        # i = 0
-        # for x, y in dataForGIF:
-        #     i += 1
-        #     fname = f"g{i}.png"
-        #     fig, (ax1, ax2) = plt.subplots(1, 2)
-        #     fig.suptitle(f"Итерация: {i}")
-        #     ax2.plot(x, y, 'bo')
-        #     ax2.set_xlim(self.start, self.end)
-        #     ax2.set_ylim(self.start, self.end)
-        #     ax1.plot(x, y, 'bo')
-        #     fig.savefig(fname)
-        #     plt.close()
-        #     fnames.append(fname)
-
-        # with imageio.get_writer('swarmGriewank100.gif', mode='I') as writer:
-        #     for filename in fnames:
-        #         image = imageio.imread(filename)
-        #         writer.append_data(image)
-
-        # for filename in set(fnames):
-        #     os.remove(filename)
+            self.iteration_count += 1
+            # Check if the specified accuracy is reached
+            
 
         # Запись результатов в CSV файл
        
@@ -153,14 +143,15 @@ class Swarm:
                 writer.writerow([i, score, pos])
 
 size_swarm = 650
-dimesion = 3
+dimesion = 2
 inertia = 0.1
 local_velocity = 2
 global_velocity = 5
 iterations = 1000
 lower_bounds = [-20, -5]
 upper_bounds = [20, 5]
-a = Swarm(size_swarm, dimesion, inertia, local_velocity, global_velocity, iterations, Griewank, lower_bounds, upper_bounds)
+accuracy = pow(10, -6)
+a = Swarm(size_swarm, dimesion, inertia, local_velocity, global_velocity, iterations, Griewank, lower_bounds, upper_bounds, accuracy)
 a.startSwarm()
 print("Размерность решаемой задачи:", a.dimension)
 print("Конечный РЕЗУЛЬТАТ:", a.globalBestScore, "Конечный В ТОЧКЕ:",a.globalBestPos)
